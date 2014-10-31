@@ -30,6 +30,16 @@ body {
   <stacked-bar-chart></stacked-bar-chart>
   <script>
 var myApp = angular.module('myApp', []);
+
+myApp.controller('MainCtrl', function($scope, $http){
+  // using `then()` callback style
+  $http.get('data.json').then(function(response){
+    $scope.jsonData = response.data;
+  }, function(err){
+    throw err;
+  });
+});
+
 myApp.directive('stackedBarChart', function(){
   function link(scope, el, attr){
 
