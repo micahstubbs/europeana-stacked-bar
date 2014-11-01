@@ -26,8 +26,8 @@ body {
 }
 
 </style>
-<body ng-app="myApp">
-  <stacked-bar-chart></stacked-bar-chart>
+<body ng-app="myApp" ng-controller="MainCtrl">
+  <stacked-bar-chart data="jsonData"></stacked-bar-chart>
   <script>
 var myApp = angular.module('myApp', []);
 
@@ -35,6 +35,16 @@ myApp.controller('MainCtrl', function($scope, $http){
   // using `then()` callback style
   $http.get('data.json').then(function(response){
     $scope.jsonData = response.data;
+
+    /** 
+    // log some data to the console for debugging
+    console.log("Your data is on the scope",$scope.jsonData);
+    console.log("Here is the first item in your data",$scope.jsonData[0]);
+    //
+    console.log("The language of the first item in your data is",$scope.jsonData[0]["language"],"the image count for this item is",$scope.jsonData[0]["Image"],"images" );
+    // end logging for debugging
+    **/
+
   }, function(err){
     throw err;
   });
@@ -70,7 +80,8 @@ myApp.directive('stackedBarChart', function(){
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
+    /**
+
     d3.csv("data.csv", function(error, data) {
       color.domain(d3.keys(data[0]).filter(function(key) { return key !== "language"; }));
     
@@ -85,6 +96,34 @@ myApp.directive('stackedBarChart', function(){
       x.domain(data.map(function(d) { return d.language; }));
       y.domain([0, d3.max(data, function(d) { return d.total; })]);
     
+    **/
+
+    scope.$watch('data', function(data){
+      if(!data){ return; }
+      console.log("here is the data available to d3",data);
+
+      color.domain(d3.keys(data[0]).filter(function(key) { return key !== "language"; }));
+
+      data.forEach(function(d) {
+        var y0 = 0;
+        d.ages = color.domain().map(function(name) { 
+          return {name: name, y0: y0, y1: y0 += d[name]}; 
+        });
+        d.total = d.ages[d.ages.length - 1].y1;
+      });
+
+      data.sort(function(a, b) {
+        return b.total - a.total;
+      });
+
+      x.domain(data.map(function(d) { 
+        return d["language"];
+      }));
+
+      y.domain([0, d3.max(data, function(d) {
+        return d.total;
+      })]);
+
       svg.append("g")
           .attr("class", "x axis")
           .attr("transform", "translate(0," + height + ")")
@@ -99,13 +138,22 @@ myApp.directive('stackedBarChart', function(){
           .attr("dy", ".71em")
           .style("text-anchor", "end")
           .text("items indexed by Europeana");
-    
+      
       var language = svg.selectAll(".language")
           .data(data)
         .enter().append("g")
           .attr("class", "g")
-          .attr("transform", function(d) { return "translate(" + x(d.language) + ",0)"; });
-    
+          .attr("transform", function(d, i) { return "translate(" + /** i*20 **/ x(d["language"]) + ",0)"; })
+
+        // append some text for debugging 
+        /**  
+        .append("text")
+          .text(function(d, i){
+            // console.log(d["language"])
+            return d["language"]
+          });
+        **/  
+
       language.selectAll("rect")
           .data(function(d) { return d.ages; })
         .enter().append("rect")
@@ -132,12 +180,13 @@ myApp.directive('stackedBarChart', function(){
           .attr("dy", ".35em")
           .style("text-anchor", "end")
           .text(function(d) { return d; });
+         
     });
   }
   return {
     link: link,
     restrict: 'E',
-    scope: {}
+    scope: { data: '='}
   };
 });
 </script>
