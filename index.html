@@ -25,9 +25,15 @@ body {
   display: none;
 }
 
+
 </style>
 <body ng-app="myApp" ng-controller="MainCtrl">
-  <stacked-bar-chart data="jsonData"></stacked-bar-chart>
+  <h2>retrieved September 26th, 2014</h2>
+  <div class="charts">
+    <stacked-bar-chart data="jsonData"></stacked-bar-chart>
+    <stacked-bar-chart data="jsonData2"></stacked-bar-chart>
+  </div>
+  <h2>retrieved November 1st, 2014</h2>
   <script>
 var myApp = angular.module('myApp', []);
 
@@ -48,15 +54,23 @@ myApp.controller('MainCtrl', function($scope, $http){
   }, function(err){
     throw err;
   });
+
+  // get the data retrieved on November 1st 2014 from data2.json
+  $http.get('data2.json').then(function(response){
+    $scope.jsonData2 = response.data;
+  }, function(err){
+    throw err;
+  });
 });
 
 myApp.directive('stackedBarChart', function(){
   function link(scope, el, attr){
 
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
+        
         width = 980 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
-    
+        height = 410 - margin.top - margin.bottom;
+        
     var x = d3.scale.ordinal()
         .rangeRoundBands([0, width], .1);
     
@@ -75,28 +89,11 @@ myApp.directive('stackedBarChart', function(){
         .orient("left")
         .tickFormat(d3.format(".2s"));
     
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select(".charts").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    /**
-
-    d3.csv("data.csv", function(error, data) {
-      color.domain(d3.keys(data[0]).filter(function(key) { return key !== "language"; }));
-    
-      data.forEach(function(d) {
-        var y0 = 0;
-        d.ages = color.domain().map(function(name) { return {name: name, y0: y0, y1: y0 += +d[name]}; });
-        d.total = d.ages[d.ages.length - 1].y1;
-      });
-    
-      data.sort(function(a, b) { return b.total - a.total; });
-    
-      x.domain(data.map(function(d) { return d.language; }));
-      y.domain([0, d3.max(data, function(d) { return d.total; })]);
-    
-    **/
 
     scope.$watch('data', function(data){
       if(!data){ return; }
